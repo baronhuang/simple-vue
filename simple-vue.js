@@ -2,6 +2,11 @@
  * Created by Administrator on 2017/2/21 0021.
  */
 
+/**
+ * vue的实现原理主要是利用es5的Object.defineProperty()方法，对属性进行劫持，监听数据的变化。在实现细节上利用观察者模式（订阅发布模式），
+ * 可以让多个观察者监听某一个对象，当对象的属性变化时，通知观察者，观察者就可以做相应的回调操作，然后更新前端的视图（调用compile，编译模板）。
+ * 流程：用户操作->directive指令->Dep.notify()->通知Watch.update()->视图变化
+ * */
 ;(function () {
     /*把元素转换成DocumentFragment，便于插入document里面*/
     function nodeToFragment (node, vm) {
@@ -47,7 +52,7 @@
         }
     }
 
-    /*这里定义一些diective*/
+    /*这里定义一些diective，定义以后就可以监听用户的输入*/
     function dirctive(node, vm) {
         if(node.hasAttribute('v-model') &&
             (node.tagName == 'INPUT' || node.tagName == 'TEXTAREA')){
@@ -58,7 +63,10 @@
         }
     }
 
-    /*观察者*/
+    /*
+    * 遍历data的key，监听每一个value的变化，defineReactive会把data属性的变化和Dep关联起来，
+    * 一旦value变化，Dep就会通知Watch去更新当前的视图。
+    * */
     function observer (obj, vm) {
         /*遍历data里面的key*/
         Object.keys(obj).forEach(function (key) {
@@ -90,9 +98,9 @@
         })
     }
 
-    /*订阅者，data对象变化时做相应的操作*/
+    /*watch就是发布者与监听者之间的桥梁，data对象变化时做相应的操作，通过update进行对视图的更新*/
     function Watcher(vm, node, name, type) {
-        /*Dep.target作为一个缓存对象，用于存放当前准备加入监听队列的订阅者，之后需要置空*/
+        /*Dep.target作为一个缓存对象，用于存放当前准备监听的对象，之后需要置空*/
         Dep.target = this;
         this.name = name;
         this.node = node;
@@ -122,7 +130,7 @@
         }
     }
 
-    /*把监听者和订阅者关联起来，往监听者里面添加订阅者就靠它了，相当于调度中心*/
+    /*把监听器关联起来，往监听者里面添加监听对象就靠它了，相当于存放watch队列*/
     function Dep () {
         this.subs = [];
     }
@@ -144,7 +152,7 @@
     }
 
     /*simple-vue 构造函数*/
-    function Sue (options) {
+    function svue (options) {
         this.data = options.data;
         /*调用观察者函数，转换data并添加埋点，这时watcher并没有初始化*/
         observer(this.data, this);
@@ -162,5 +170,5 @@
 
     }
 
-    window.Sue = Sue;
+    window.svue = svue;
 })();
